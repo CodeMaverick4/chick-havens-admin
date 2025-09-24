@@ -1,0 +1,5 @@
+export const PRODUCT_API_URL = 'https://todo-app-75d12-default-rtdb.firebaseio.com/travel-db/products'
+export const CATEGORIES_API_URL = 'https://todo-app-75d12-default-rtdb.firebaseio.com/travel-db/category'
+export const CUSTOMERS_API_URL = 'https://todo-app-75d12-default-rtdb.firebaseio.com/travel-db/customers'
+export const ORDERS_API_URL = 'https://todo-app-75d12-default-rtdb.firebaseio.com/travel-db/orders'
+export const ENQUIRES_API_URL = 'https://todo-app-75d12-default-rtdb.firebaseio.com/travel-db/enquires'
