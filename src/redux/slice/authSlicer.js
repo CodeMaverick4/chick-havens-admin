@@ -14,6 +14,8 @@ const authSlicer = createSlice({
         logout: (state, action) => {
             state.user = null
             state.token = null
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
         },
         loadLoginDetails:(state,action)=>{
             const token = localStorage.getItem('token');
