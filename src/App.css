@@ -394,10 +394,12 @@ textarea {
 .product-preview-img {
     position: relative;
 }
-.product-preview-img div{
+
+.product-preview-img div {
     display: none;
 }
-.product-preview-img:hover div{
+
+.product-preview-img:hover div {
     position: absolute;
     top: 0;
     display: flex;
@@ -405,7 +407,7 @@ textarea {
     align-items: center;
     gap: 15px;
     border-radius: 10px;
-    background: rgba(0, 0, 0,0.4);
+    background: rgba(0, 0, 0, 0.4);
     /* backdrop-filter: blur(2px);     */
     backdrop-filter: blur(2px) opacity(0.5);
     height: 100%;
@@ -654,6 +656,25 @@ textarea {
     font-size: 22px;
 }
 
+.enquiry-img {
+    height: 25px;
+    width: 25px;
+
+}
+.enquiry{
+    height: 480px;
+}
+.enquiry-customer-list{
+    width: 350px;
+}
+.chat-panel {
+    background-color: #c4c4cd;    
+    overflow: auto;
+}
+.chat-header{
+    background-color: white;
+}
+/* -------------------------------------------------- enquiry css  */
 /* chart css  */
 .chart-container {
     width: 100%;

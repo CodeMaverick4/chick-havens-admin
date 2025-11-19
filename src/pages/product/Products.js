@@ -32,12 +32,12 @@ const Products = () => {
 
     const columns = [
         { name: 'S.No', selector: (row, index) => index + 1, sortable: false, width: "60px" },
-        { name: 'Image', cell: row => <img src={row.images[0]} alt="product" width={40} height={40} style={{ borderRadius: "50%" }} />, width: "80px" },
+        { name: 'Image', cell: row => <img src={row.images ? row.images[0] : []} alt="product" width={40} height={40} style={{ borderRadius: "50%" }} />, width: "80px" },
         { name: 'Product Name', selector: row => row.name, sortable: true },
-        { name: 'Brand', selector: row => row.brand, sortable: true },
-        { name: 'Category', selector: row => row.category, sortable: true },
+        { name: 'Brand', selector: row => row.brand, sortable: true ,width:'120px'},
+        { name: 'Category', selector: row => row.category, sortable: true ,width:'180px'},
         { name: 'Price', selector: row => `$${Number(row.price).toFixed(2)}`, sortable: true ,width:'100px'},
-        { name: 'Stock', selector: row => row.stock, sortable: true ,width:'100px'},
+        { name: 'Stock', selector: row => row.stock, sortable: true ,width:'100px', center:true},
         {
             name: 'Action', cell: row =>
                 <div className="d-flex gap-2 fs-5">

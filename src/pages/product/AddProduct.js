@@ -19,7 +19,7 @@ const options = [
 const AddProduct = () => {
     const [isLoading, setIsLoading] = useState(false);
     const location = useLocation();
-    const [options,setOptions] = useState([]);
+    const [options, setOptions] = useState([]);
     // const [category]
     const [productData, setProductData] = useState({
         "brand": "",
@@ -28,6 +28,7 @@ const AddProduct = () => {
         "images": [],
         "name": "",
         "price": "",
+        "discount": '',        
         "stock": "",
     });
     const [errors, setErrors] = useState({
@@ -36,6 +37,7 @@ const AddProduct = () => {
         "description": "",
         "name": "",
         "price": "",
+        "discount": '',        
         "stock": "",
     });
     const productId = location.state?.productId
@@ -46,31 +48,43 @@ const AddProduct = () => {
     const inputRef = useRef(null);
     const navigate = useNavigate();
 
+    console.log("env ...", process.env.REACT_APP_CLOUDINARY_CLOUD_NAME)
     const handleFileSubmit = async () => {
         try {
             setIsLoading(true);
-            const formdata = new FormData();
             let urls = [];
+
             for (let img of images) {
-                if (img instanceof File) {
-                    formdata.append('files', img)
-                } else {
-                    urls.push(img)
+                // Skip if it's already a URL (existing image)
+                if (!(img instanceof File)) {
+                    urls.push(img);
+                    continue;
                 }
+
+                const formData = new FormData();
+                formData.append("file", img);
+                formData.append("upload_preset", process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET);
+                formData.append("folder", "chic_havens");
+
+                const response = await axios.post(
+                    `https://api.cloudinary.com/v1_1/${process.env.REACT_APP_CLOUDINARY_CLOUD_NAME}/image/upload`,
+                    formData
+                );
+
+                urls.push(response.data.secure_url);
             }
 
-            if (!formdata.has('files')) {
-                return urls
-            }
-            const response = await axios.post("http://localhost:5000/upload", formdata);
-            toastEmitter('success', response.data.message);
+            toastEmitter("success", "Files uploaded successfully");
             setIsLoading(false);
-            return [...urls, ...response.data.urls]
+            return urls;
+
         } catch (err) {
             setIsLoading(false);
-            toastEmitter('error', 'error while uploading files');
+            console.error(err);
+            toastEmitter("error", "Error while uploading files");
         }
-    }
+    };
+
     const handleAddProduct = async () => {
         const ifError = checkError(errors)
         if (ifError) return
@@ -104,15 +118,15 @@ const AddProduct = () => {
     }
 
     const loadCategory = async () => {
-        
+
         try {
             setIsLoading(true);
             const response = await axios.get(`${CATEGORIES_API_URL}.json`);
             let opt = []
-            for(let key in response.data){
+            for (let key in response.data) {
                 // opt[key] = response.data[key].categoryName;
                 let val = response.data[key].categoryName
-                opt.push({value:val,label:val})
+                opt.push({ value: val, label: val })
             }
             console.log(opt)
             setOptions(opt)
@@ -133,7 +147,7 @@ const AddProduct = () => {
             const response = await axios.get(`${PRODUCT_API_URL}/${productId}.json`);
             console.log(response.data)
             setProductData(response.data)
-            setImages(response.data.images)
+            setImages(response.data.images ? response.data.images : [])
             setSelectedImage(response.data.images[0])
             setIsLoading(false);
         } catch (err) {
@@ -149,19 +163,31 @@ const AddProduct = () => {
         } else {
             console.log(e.target.name)
             setProductData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+            setErrors(prev=> ({ ...prev, [e.target.name]: '' }))
         }
     }
 
+    // const handleFileUpload = (e) => {
+    //     if (images?.length >= 4) {
+    //         toastEmitter('error', "you can only upload 4 images.");
+    //         return
+    //     }
+
+    //     const file = e.target.files[0];
+    //     setImages(prev => [...prev, file]);
+    //     setSelectedImage(file)
+    // }
     const handleFileUpload = (e) => {
-        if (images.length >= 4) {
-            toastEmitter('error', "you can only upload 4 images.");
-            return
+        const selectedFiles = Array.from(e.target.files); 
+
+        if ((images?.length || 0) + selectedFiles.length > 4) {
+            toastEmitter('error', "You can only upload 4 images.");
+            return;
         }
 
-        const file = e.target.files[0];
-        setImages(prev => [...prev, file]);
-        setSelectedImage(file)
-    }
+        setImages(prev => [...(prev || []), ...selectedFiles]);
+        setSelectedImage(selectedFiles[0]); 
+    };
 
     const handleAddImage = (e) => {
         if (inputRef.current) {
@@ -231,11 +257,9 @@ const AddProduct = () => {
 
                                     <div className="cursor-pointer border rounded-3 d-flex justify-content-center align-items-center bg-primary text-white shadow-lg" style={{ height: '80px', width: '80px' }} onClick={handleAddImage}>
                                         <i class="bi bi-patch-plus"></i>
-                                        <input ref={inputRef} type="file" name="" id="" hidden='True' onChange={handleFileUpload} />
+                                        <input ref={inputRef} type="file" name="" id="" hidden='True' onChange={handleFileUpload} multiple />
                                     </div>
                                 </div>
-
-
                             </div>
                         </div>
                         <div className="col-6 ">
@@ -266,24 +290,48 @@ const AddProduct = () => {
                                 name={'category'}
                                 options={options}
                                 label="Category*"
-                                required={true}
-                                // value={productData?.category}
+                                required={true}                                
                                 value={options.find(opt => opt.value === productData?.category)}
                                 parentDivCss="mt-3"
                                 onChange={handleChange}
                             />
                             <span className="error-msg">{errors.category}</span>
-                            <Input
-                                name={'price'}
-                                type="number"
-                                placeholder="Enter Price*"
-                                label="Price"
-                                required={true}
-                                value={productData?.price}
-                                parentDivCss="mt-3"
-                                onChange={handleChange}
-                            />
-                            <span className="error-msg">{errors.price}</span>
+                            <div className="d-flex gap-2 align-items-center">
+                                <Input
+                                    name={'price'}
+                                    type="number"
+                                    placeholder="Enter Price"
+                                    label="Price"
+                                    required={true}
+                                    value={productData?.price}
+                                    parentDivCss="mt-3"
+                                    onChange={handleChange}
+                                />
+                                <span className="error-msg">{errors.price}</span>
+                                <Input
+                                    name={'discount'}
+                                    type="number"
+                                    placeholder="Enter discount in %"
+                                    label="Discount"
+                                    required={true}
+                                    value={productData?.discount}
+                                    parentDivCss="mt-3"
+                                    onChange={handleChange}
+                                />
+                                <span className="error-msg">{errors.discount}</span>
+                                {/* <Input
+                                    name={'discounted_price'}
+                                    type="number"
+                                    // placeholder="Enter Price*"
+                                    label="Actual Price"
+                                    required={true}
+                                    value={productData?.discounted_price}
+                                    parentDivCss="mt-3"
+                                    onChange={handleChange}
+                                />
+                                <span className="error-msg">{errors.discounted_price}</span> */}
+                            </div>
+
                             <Input
                                 name={'stock'}
                                 type="number"

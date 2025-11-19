@@ -1,68 +1,103 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import DataTableCustom from "../../components/common/DataTableCustom";
+import { useState, useEffect } from "react";
+import { db } from "../../firebase";
+import { ref, onValue } from "firebase/database";
 import { Input } from "../../components/common/Input";
-import Slider from "../../components/common/Slider";
-import { toastEmitter } from "../../utils/toastEmitter";
-import { debounce } from "lodash";
-import { ROUTES } from "../../routes/routes";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { ENQUIRES_API_URL } from "../../utils/api-constants";
+import ChatPanel from "./chatPanel";
 
 const Enquiries = () => {
-    const [rows, setRows] = useState([]);
-    const [total, setTotal] = useState(0);
-    // +---------------------+
-    const [isLoading, setIsLoading] = useState(false);
     const [searchValue, setSearchValue] = useState("");
-    const navigate = useNavigate();
-
-    const columns = useMemo(() => [
-        { name: "S.No", cell: (row, index) => index + 1, width: "80px", center: "true" },
-        { name: "Full Name", cell: (row) => row.full_name },
-        { name: 'Email', cell: row => row.email, width: "250px" },
-        { name: 'Phone', cell: row => row.description },
-        { name: 'Issue', cell: row => row.description },
-        { name: 'Status', cell: row => row.status, center: "true" },
-        { name: 'Action', cell: row => <i className="bi bi-pen datatable_edit_icon" onClick={() => navigate(`${ROUTES.CUSTOMERDETAIL}${row.id}`)}></i>, center: "true" }
-    ], []);
-
-    const loadEnquries = async () => {
-        try {
-            setIsLoading(true);
-            const response = await axios.get(`${ENQUIRES_API_URL}.json`);
-            setRows(response.data.data)
-            setTotal(response.data.total);
-            setIsLoading(false);
-        } catch (err) {
-            setIsLoading(false);
-            toastEmitter("error", err.response.data.message);
-            console.log("err -->", err);
-        }
-    };
-
+    const [users, setUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
 
     useEffect(() => {
-        loadEnquries();
-    }, [])
+        const enquiriesRef = ref(db, "chic-havens-enquiries");
+        const unsubscribe = onValue(enquiriesRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const updatedChats = Object.entries(data).map(([chatId, chatData]) => ({
+                    chatId,
+                    user: chatData.user || {},
+                    messages: chatData.messages ? Object.values(chatData.messages) : [],
+                }));
+                setUsers(updatedChats);
+                console.log(updatedChats)
+            } else {
+                setUsers([]);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const handleChange = (e) => setSearchValue(e.target.value);
+
+    const filteredUsers = users.filter((u) =>
+        (u.user.name || "Unnamed User").toLowerCase().includes(searchValue.toLowerCase())
+    );
+
 
     return (
-        <>
-            <h3 className=" mb-4">All Enquries</h3>
-            <div className="outlet-container">
-                <div className="row mb-3">
-                    <div className="col-md-3 offset-md-9 col-12">
-                        <Input type={"text"} label={"Search"} placeholder={"Enter Customer Name"} required={true} />
-                    </div>
+        <div className="d-flex bg-white enquiry" style={{ height: "80vh" }}>
+            {/* LEFT SIDEBAR */}
+            <div
+                className="d-flex flex-column py-1 enquiry-customer-list border-end"
+                style={{ width: "350px", flexShrink: 0 }}
+            >
+                <div className="p-2">
+                    <h5>All Chats ({users.length})</h5>
+                    <Input
+                        name="Search"
+                        type="text"
+                        placeholder="Enter customer name"
+                        label="Search"
+                        required={false}
+                        value={searchValue}
+                        parentDivCss="mt-3"
+                        onChange={handleChange}
+                    />
                 </div>
-                <DataTableCustom
-                    _tblColumns={columns}
-                    _rowData={rows}
 
-                    isLoading={isLoading}
-                />
+                <div className="overflow-auto flex-grow-1" style={{ minHeight: 0 }}>
+                    {filteredUsers.map((u) => (
+                        <div
+                            key={u.chatId}
+                            className={`d-flex align-items-center gap-2 border-bottom px-2 py-2 rounded-2 w-100 ${selectedUser?.chatId === u.chatId ? "bg-light" : ""
+                                }`}
+                            style={{ cursor: "pointer" }}
+                            onClick={() => setSelectedUser(u)}
+                        >
+                            <img
+                                src={u.user.photo || "assets/dummy-user-image.jpg"}
+                                alt=""
+                                width={60}
+                                height={60}
+                                className="rounded-circle"
+                            />
+                            <div className="d-flex flex-column">
+                                <span className="fw-bold">{u.user.name || "Unnamed User"}</span>
+                                <span className="text-muted small">{u.user.email || "No email"}</span>
+                                <span className="text-muted small">
+                                    {u.messages.length ? `${u.messages.length} message(s)` : "No messages yet"}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-        </>
-    )
-}
-export default Enquiries
+
+            {/* RIGHT SIDE - CHAT PANEL */}
+            <div className="flex-grow-1 d-flex flex-column">
+                {selectedUser ? (
+                    <ChatPanel selectedUser={selectedUser} />
+                ) : (
+                    <div className="d-flex justify-content-center align-items-center h-100 text-muted">
+                        Select a customer to start chat
+                    </div>
+                )}
+            </div>
+        </div>
+
+    );
+};
+
+export default Enquiries;

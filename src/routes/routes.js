@@ -14,11 +14,13 @@ export const ROUTES = {
   PRODUCTS: "/products",
   ADDPRODUCT: "/products/add/",
 
-  EMPLOYEES: "/employees",
-  ADDEMPLOYEE: "/add-employee", 
-  ROLES: "/roles",
-  ADDROLE: "/add-role",
-
   ENQUIRIES:"/enquiry",
-  SETTINGS:"/settings"
+  SETTINGS:"/settings",
+
+   // ...other routes
+  STAFF: '/staff',  
+  ADDSTAFF: '/staff/add',
+
+  ROLES: '/roles',
+  ADDROLES: '/roles/add'
 };

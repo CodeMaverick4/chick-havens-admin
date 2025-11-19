@@ -115,7 +115,10 @@ const Feedbacks = ()=>{
     return(
         <>
             <h3 className=" mb-4">All Feedbacks</h3>
-            <div className="outlet-container">
+            <div>
+              under development
+            </div>
+            {/* <div className="outlet-container">
                 <div className="row mb-3">
                     <div className="col-3 offset-9">
                     <Input type={"text"} label={"Search"} placeholder={""} required={true} />
@@ -134,7 +137,7 @@ const Feedbacks = ()=>{
                     setPending={setPending}
                 />
 
-            </div>
+            </div> */}
     </>
     )
 }
