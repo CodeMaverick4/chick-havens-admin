@@ -11,7 +11,7 @@ import { handleFormInput, handleFormPreRequisite, trimFormData } from "../utils/
 import axios from "axios";
 import { ROLES_API_URL, STAFF_API_URL } from "../utils/api-constants";
 
-const API_URL = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyADlE9XtphNjvJg1YtSO3BU0DZ8MXwCQGE';
+const API_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${process.env.REACT_APP_APIKEY}`;
 
 const Login = () => {
     const dispatch = useDispatch();
